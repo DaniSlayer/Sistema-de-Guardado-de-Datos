@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Captura de Datos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container rainbow-shadow">
+    <div id="app">
+        <h1 class="texto">CAPTURA DE DATOS</h1>
+
+        <!--formulario de captura-->
+        <div class="inputs">
+            <div class="input-group">
+                <label>Nombre</label>
+                <input ref="nombre" type="text" v-model="persona.nombre">
+            </div>
+            <div class="input-group">
+                <label>Apellido</label>
+                <input type="text" v-model="persona.apellido">
+            </div>
+            <div class="input-group">
+                <label>Edad</label>
+                <input type="number" v-model="persona.edad" min="1">
+            </div>
+        </div>
+        <!--formulario de captura-->
+
+        <!-- Guardado o edición -->
+        <div class="button-group">
+            <button v-if="indiceEdicion === null" @click="confirmaciones()" class="guardar">Guardar</button>
+            <button v-else @click="actualizar()" class="actualizar">Actualizar</button>
+        </div>
+
+        <div class="tabla">
+            <table v-if="personas.length > 0">
+                <thead>
+                    <tr>
+                        <th>NOMBRE</th>
+                        <th>APELLIDO</th>
+                        <th>EDAD</th>
+                        <th>ACCIÓN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(data, index) in personas" :key="index">
+                        <td>{{ data.nombre }}</td>
+                        <td>{{ data.apellido }}</td>
+                        <td>{{ data.edad }}</td>
+                        <td class="action-buttons">
+                            <button @click="borrar(index)" class="btn-action btn-delete">Borrar</button>
+                            <button @click="editar(index)" class="btn-action btn-edit">Editar</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div v-else class="empty-state">No hay registros. ¡Agrega uno para comenzar!</div>
+        </div>
+    </div>
+</div>
+
+<!-- Sistema de notificación -->
+<div id="alertContainer"></div>
+
+<!-- Importar Vue -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                personas: [],
+                persona: {
+                    nombre: '',
+                    apellido: '',
+                    edad: null
+                },
+                indiceEdicion: null
+            };
+        },
+        methods: {
+            // mostrar notificaciones
+            mostrarAlerta(mensaje) {
+                const alerta = document.createElement('div');
+                alerta.className = 'alert';
+                alerta.textContent = mensaje;
+                document.getElementById('alertContainer').appendChild(alerta);
+                
+                setTimeout(() => {
+                    alerta.remove();
+                }, 3000);
+            },
+
+            // Método que valida los campos antes de guardar
+            confirmaciones() {
+                if (!this.persona.nombre.trim() || !this.persona.apellido.trim() || !this.persona.edad || this.persona.edad <= 0) {
+                    this.mostrarAlerta("Debes llenar todos los campos correctamente");
+                    return;
+                } else {
+                    this.guardar();
+                }
+            },
+
+            // Método que guarda los datos ingresados en el ARRAY "personas"
+            guardar() {
+                this.personas.push({ ...this.persona });
+                this.limpiar();
+                this.mostrarAlerta("Datos guardados correctamente");
+            },
+
+            // Método para limpiar los campos del formulario
+            limpiar() {
+                this.persona = { nombre: '', apellido: '', edad: null };
+                this.indiceEdicion = null;
+                this.$nextTick(() => {
+                    this.$refs.nombre?.focus();
+                });
+            },
+
+            // Método para borrar una persona de la lista
+            borrar(index) {
+                this.personas.splice(index, 1);
+                this.limpiar();
+                this.mostrarAlerta("Registro eliminado");
+            },
+
+            // Método para cargar los datos de una persona en el formulario y habilitar la edición
+            editar(index) {
+                this.indiceEdicion = index;
+                this.persona = { ...this.personas[index] };
+                this.mostrarAlerta("Modo edición activado");
+                this.$nextTick(() => {
+                    this.$refs.nombre?.focus();
+                });
+            },
+
+            // Método para actualizar los datos editados en la lista
+            actualizar() {
+                if (!this.persona.nombre.trim() || !this.persona.apellido.trim() || !this.persona.edad || this.persona.edad <= 0) {
+                    this.mostrarAlerta("Debes llenar todos los campos correctamente");
+                    return;
+                }
+                
+                if (this.indiceEdicion !== null) {
+                    this.personas[this.indiceEdicion] = { ...this.persona };
+                    this.limpiar();
+                    this.mostrarAlerta("Datos actualizados correctamente");
+                }
+            }
+        },
+        mounted() {
+            this.$refs.nombre?.focus();
+        }
+    }).mount("#app");
+</script>
+</body>
+</html>
